@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.tools/
+.cache/
+data/
+deck.csv
+artifacts/
+*.tar.gz
+.env
+kaggle.json
+build/
