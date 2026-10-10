@@ -1,0 +1,30 @@
+<!doctype html>
+<!-- Local QA harness: renders the real page, starts a duel and plays a few turns automatically. Not linked from the site. -->
+<meta charset="utf-8">
+<script>
+  const params = new URLSearchParams(location.search);
+  const bot = `<script>
+    setTimeout(() => {
+      const d = document;
+      d.querySelector('[data-deck="storm"]').click();
+      d.querySelector('[data-level="master"]').click();
+      d.getElementById('start').click();
+      let turns = 0;
+      const tick = setInterval(() => {
+        const end = d.getElementById('end-turn');
+        if (end.disabled) return;
+        const card = d.querySelector('.card.playable');
+        if (card) { card.click(); const t = d.querySelector('.unit.target, .stat.target'); if (t) t.click(); return; }
+        const ready = d.querySelector('#your-board .unit.ready');
+        if (ready) { ready.click(); const t = d.querySelector('.unit.target, .stat.target'); if (t) { t.click(); return; } }
+        if (++turns > ${Number(params.get('turns') || 4)}) { clearInterval(tick); d.getElementById('coach').click(); ${params.get('tab') ? `d.getElementById('tab-${params.get('tab')}').click();` : ''} return; }
+        end.click();
+      }, 250);
+    }, 200);
+  <\/script>`;
+  fetch('../index.html').then(r => r.text()).then(html => {
+    document.open();
+    document.write(html.replace('<head>', '<head><base href="../">').replace('</body>', bot + '</body>'));
+    document.close();
+  });
+</script>

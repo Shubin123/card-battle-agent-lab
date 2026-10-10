@@ -1,0 +1,9 @@
+﻿{
+  "name": "card-battle-agent-lab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "train": "node tools/train.mjs"
+  }
+}

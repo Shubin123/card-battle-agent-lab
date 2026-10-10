@@ -3,150 +3,121 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Card Battle Agent Lab</title>
-<meta name="description" content="A game-playing agent for a Kaggle card-battle simulation competition: how it decides, and how it measures up locally.">
-<style>
-:root{--bg:#10151d;--panel:#18212e;--line:#33404f;--text:#e8edf5;--muted:#aab7c8;--accent:#8ce0bd;--accent-2:#ffda85;--bar-bg:#253346;color-scheme:dark}
-@media (prefers-color-scheme:light){:root{--bg:#f6f7f9;--panel:#fff;--line:#d5dbe3;--text:#17202b;--muted:#4f5d6e;--accent:#1d7a57;--accent-2:#9a6400;--bar-bg:#e6ebf1;color-scheme:light}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
-.wrap{max-width:960px;margin:auto;padding:48px 16px}
-header{border-bottom:1px solid var(--line);padding-bottom:28px}
-.eyebrow{letter-spacing:.16em;color:var(--accent);font-size:12px;font-weight:600;text-transform:uppercase}
-h1{font-size:clamp(30px,6vw,52px);line-height:1.1;margin:14px 0}
-h2{font-size:24px;margin:0 0 8px}
-h3{font-size:18px;margin:0 0 4px}
-p{color:var(--muted);max-width:720px;margin:8px 0}
-section{margin:36px 0}
-.panel{padding:22px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
-.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-.row{margin:14px 0}
-.row-head{display:flex;justify-content:space-between;gap:12px;font-size:14px}
-.row-head span:last-child{font-variant-numeric:tabular-nums;color:var(--muted)}
-.track{position:relative;height:10px;background:var(--bar-bg);border-radius:6px;margin-top:6px}
-.fill{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:6px}
-.ci{position:absolute;top:-3px;height:16px;border-left:2px solid var(--accent-2);border-right:2px solid var(--accent-2)}
-.half{position:absolute;left:50%;top:-4px;bottom:-4px;border-left:1px dashed var(--muted)}
-.meta{font-size:13px;color:var(--muted)}
-ol.steps{padding-left:20px;color:var(--muted)}ol.steps li{margin:8px 0}ol.steps b{color:var(--text)}
-select,button{font:inherit;padding:10px 12px;background:var(--bar-bg);color:var(--text);border:1px solid var(--line);border-radius:8px;max-width:100%}
-select{width:100%}
-button{margin:14px 0;cursor:pointer;border-color:var(--accent)}
-.option{margin:10px 0;padding:14px;border:1px solid var(--line);border-radius:10px}
-.chosen{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
-.option .track{height:8px}
-footer{border-top:1px solid var(--line);padding-top:20px;font-size:13px}
-a{color:var(--accent)}
-:focus-visible{outline:3px solid var(--accent-2);outline-offset:3px}
-</style>
+<title>Wordbound Duel</title>
+<meta name="description" content="A words-only card battler with a self-play-trained rival you can watch think.">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="wrap">
-<header>
-  <div class="eyebrow">Agent lab · simulation competition</div>
-  <h1>Teaching an agent to play a card battle.</h1>
-  <p>This is a hobby entry for a <a href="https://www.kaggle.com/competitions/the-pokemon-company-ptcg-ai-battle-challenge-playground">Kaggle simulation competition</a>, where submitted programs play full card games against each other. Here's how the agent decides, and how each version did in local testing.</p>
+<header class="top">
+  <div class="brand"><span class="brand-mark" id="brand-icon"></span><div><h1>Wordbound Duel</h1><p>A card battler made only of words, against a rival trained by self-play.</p></div></div>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="tab-play" aria-controls="panel-play" aria-selected="true">Play</button>
+    <button role="tab" id="tab-arena" aria-controls="panel-arena" aria-selected="false">Arena</button>
+    <button role="tab" id="tab-how" aria-controls="panel-how" aria-selected="false">How it works</button>
+  </nav>
 </header>
 
 <main>
-<section aria-labelledby="results-title">
-  <h2 id="results-title">Measured locally</h2>
-  <p id="setting">Loading results…</p>
-  <div class="grid" id="agents"></div>
-  <p class="meta">Bars show win rate. The gold bracket is the 95% Wilson interval, and the dashed line marks 50%. Repeated opponents and simulator randomness can make games correlated, so treat the intervals as descriptive.</p>
-</section>
+  <section id="panel-play" role="tabpanel" aria-labelledby="tab-play">
+    <div id="setup" class="setup">
+      <h2>Choose your school</h2>
+      <div id="deck-choices" class="deck-choices" role="radiogroup" aria-label="Your deck"></div>
+      <div class="setup-row">
+        <label>Rival deck
+          <select id="rival-deck"></select>
+        </label>
+        <fieldset class="levels" id="levels"><legend>Rival strength</legend></fieldset>
+      </div>
+      <button id="start" class="primary">Begin the duel</button>
+      <details class="rules">
+        <summary>How to play</summary>
+        <ul>
+          <li>Bring your rival's <strong>core</strong> from 20 to 0. Each player draws 1 card a turn and gains 1 more <strong>ink</strong> per turn, up to 10.</li>
+          <li>Spend ink to play cards from your hand. <strong>Units</strong> stay on your side (5 at most). <strong>Spells</strong> resolve and are gone.</li>
+          <li>Units can attack once per turn, starting the turn after they're played. Attacker and defender damage each other at the same time.</li>
+          <li>If a player has no cards left to draw, they take growing fatigue damage instead.</li>
+          <li>Click a card to play it, or click one of your units and then a target to attack. Press Escape to cancel.</li>
+        </ul>
+        <div id="keyword-list" class="keyword-list"></div>
+      </details>
+    </div>
 
-<section aria-labelledby="how-title">
-  <h2 id="how-title">How it was built</h2>
-  <ol class="steps">
-    <li><b>Hand-written baselines.</b> A linear ranking of option types, then a tactical heuristic that reads only public board information.</li>
-    <li><b>Real games as training data.</b> <span id="games">Simulated</span> games on the competition simulator recorded every decision menu and the heuristic's score for each option.</li>
-    <li><b>GPU training.</b> <span id="training-line">A small neural network learned to reproduce those scores.</span> Games were split into training and validation sets, so no game appears in both.</li>
-    <li><b>Lookahead search.</b> At each single-choice decision the agent guesses hidden cards from what it can see, plays every option forward to the end of its own turn, and keeps the option with the best resulting board.</li>
-  </ol>
-</section>
+    <div id="game" class="game" hidden>
+      <div class="table">
+        <div class="side rival">
+          <div class="bar" id="rival-bar"></div>
+          <div class="board" id="rival-board" aria-label="Rival units"></div>
+        </div>
+        <div class="midline">
+          <span id="turn-pill" class="pill"></span>
+          <span id="status" role="status" aria-live="polite"></span>
+        </div>
+        <div class="side you">
+          <div class="board" id="your-board" aria-label="Your units"></div>
+          <div class="bar" id="your-bar"></div>
+        </div>
+        <div class="hand" id="hand" aria-label="Your hand"></div>
+        <div class="controls">
+          <button id="end-turn" class="primary">End turn</button>
+          <button id="coach">Ask the coach</button>
+          <button id="cancel" hidden>Cancel</button>
+          <button id="forfeit" class="quiet">New duel</button>
+        </div>
+      </div>
+      <aside class="sidebar">
+        <section class="panel">
+          <h3><span id="think-icon"></span> Rival's reasoning</h3>
+          <p class="meta" id="think-meta">The rival explains each decision here.</p>
+          <ol id="thoughts" class="thoughts"></ol>
+        </section>
+        <section class="panel">
+          <h3><span id="log-icon"></span> Duel log</h3>
+          <ol id="log" class="log" aria-live="polite"></ol>
+        </section>
+      </aside>
+    </div>
 
-<section class="panel" aria-labelledby="demo-title">
-  <h2 id="demo-title">Inside one decision</h2>
-  <p>A simplified look at the original baseline ranking a few example option menus. These are generated examples, not real game states.</p>
-  <label for="scenario">Example menu</label>
-  <p><select id="scenario" disabled><option>Loading…</option></select></p>
-  <button id="run" disabled>Show the baseline's choice</button>
-  <div id="output" aria-live="polite"></div>
-</section>
+    <div id="result" class="result" hidden>
+      <div class="result-card">
+        <span id="result-icon"></span>
+        <h2 id="result-title"></h2>
+        <p id="result-text"></p>
+        <button id="again" class="primary">Duel again</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel-arena" role="tabpanel" aria-labelledby="tab-arena" hidden>
+    <h2>Arena</h2>
+    <p id="arena-intro"></p>
+    <div class="arena-grid">
+      <div class="panel"><h3>Matchups between specialists</h3><p class="meta">Each cell is the row deck's win rate against the column deck, with draws counting as half.</p><div id="matrix"></div></div>
+      <div class="panel"><h3>Does specialising help?</h3><p class="meta">Each deck's win rate against the general rival on every deck, played with the general evaluator vs. its own specialist.</p><div id="gain"></div></div>
+      <div class="panel"><h3>Difficulty ladder</h3><p class="meta">Head-to-head win rates across every deck pairing, with draws counting as half. The green bracket is the 95% Wilson interval, and the dashed line marks 50%.</p><div id="depth"></div></div>
+      <div class="panel"><h3>Training stages</h3><ol id="stages" class="stages"></ol></div>
+    </div>
+  </section>
+
+  <section id="panel-how" role="tabpanel" aria-labelledby="tab-how" hidden>
+    <h2>How the rival works</h2>
+    <div class="how">
+      <article class="panel"><h3>It only knows what you'd know</h3><p>The rival never reads your hand or the order of either deck. It sees what a player at the table sees: the board, discard piles, card counts, its own hand, and every card you've revealed. Before deciding, it builds several <em>guessed worlds</em>. Each one fills your hidden hand from deck lists that fit the cards you've shown, so it reasons from facts it has observed rather than assumptions about you.</p></article>
+      <article class="panel"><h3>It looks ahead</h3><p><strong>Novice</strong> picks the move that looks best right now, with some noise. <strong>Adept</strong> plays out the rest of its turn for each option. <strong>Master</strong> plans its turn with beam search, checks your likely reply in four guessed worlds, and scores boards with its trained specialist evaluator.</p><p>One lesson matches the write-up. Deeper search alone added nothing: with the evaluator held fixed, Master's search beat Adept's only half the time. The gain came from what self-play taught the evaluator.</p></article>
+      <article class="panel"><h3>It learned what a good board looks like</h3><p>Every option is scored by an evaluator that weighs ten board features: core difference, power, guard, unit count, cards in hand, ink, walls, shields, lethal pressure and cards left in deck. Novice and Adept use hand-set weights. Master uses weights learned from self-play, a separate set for each deck.</p></article>
+      <article class="panel"><h3>Trained in stages</h3><p>The training follows the staged recipe from the <a href="https://www.kaggle.com/competitions/pokemon-tcg-ai-battle-challenge-strategy/writeups/new-writeup-1784257142000">first-place write-up</a> of a Kaggle card-battle AI competition:</p>
+        <ol>
+          <li>Broad self-play over every deck.</li>
+          <li>A single-deck specialist per deck, trained against a frozen ladder of opponents.</li>
+          <li>A round-robin arena that keeps the strongest version of each deck and shows the matchups between them.</li>
+        </ol>
+        <p>Identical copies of a card count as one option, which mirrors how that write-up merged equivalent options. Their agent learned its policy with a Transformer trained by PPO. This small browser game uses an evolved evaluator plus search, so it runs instantly on your device.</p></article>
+    </div>
+  </section>
 </main>
 
 <footer>
-  <p>An independent, unofficial project with no affiliation to the competition host or sponsor. This site contains no game artwork, card names, card data, decks, game logs, simulator files or model weights. It shows only aggregate numbers from local testing, which are not leaderboard results.</p>
+  <p>An original game. All cards, rules and code are made for this project. Not affiliated with any trading card game, Kaggle, or the competition's host or sponsor. <a href="lab.html">Earlier competition lab notes</a>.</p>
 </footer>
-</div>
-
-<script>
-'use strict';
-const pct = v => (100 * v).toFixed(1) + '%';
-function bar(value, interval) {
-  const track = document.createElement('div'); track.className = 'track';
-  const fill = document.createElement('div'); fill.className = 'fill'; fill.style.width = pct(Math.max(0, Math.min(1, value)));
-  const half = document.createElement('div'); half.className = 'half';
-  track.append(fill, half);
-  if (interval) {
-    const ci = document.createElement('div'); ci.className = 'ci';
-    ci.style.left = pct(interval[0]); ci.style.width = pct(interval[1] - interval[0]);
-    track.append(ci);
-  }
-  return track;
-}
-fetch('results.json').then(r => { if (!r.ok) throw Error(); return r.json(); }).then(report => {
-  document.getElementById('setting').textContent = report.setting + ' Updated ' + report.updated + '.';
-  const host = document.getElementById('agents');
-  for (const agent of report.agents) {
-    const card = document.createElement('article'); card.className = 'panel';
-    const h = document.createElement('h3'); h.textContent = agent.name;
-    const d = document.createElement('p'); d.className = 'meta'; d.textContent = agent.description;
-    card.append(h, d);
-    for (const [opponent, s] of Object.entries(agent.by_opponent)) {
-      const row = document.createElement('div'); row.className = 'row';
-      const head = document.createElement('div'); head.className = 'row-head';
-      const a = document.createElement('span'); a.textContent = 'vs ' + opponent;
-      const b = document.createElement('span'); b.textContent = `${pct(s.win_rate)} · ${s.wins}–${s.losses}${s.draws ? '–' + s.draws : ''}`;
-      head.append(a, b);
-      row.setAttribute('aria-label', `Versus ${opponent}: ${s.wins} wins, ${s.losses} losses, ${s.draws} draws in ${s.matches} games; 95% interval ${pct(s.win_rate_wilson_95[0])} to ${pct(s.win_rate_wilson_95[1])}`);
-      row.append(head, bar(s.win_rate, s.win_rate_wilson_95));
-      card.append(row);
-    }
-    const lat = document.createElement('p'); lat.className = 'meta';
-    lat.textContent = `95th-percentile decision time: ${agent.decision_ms_p95.toFixed(1)} ms`;
-    card.append(lat);
-    host.append(card);
-  }
-  const t = report.training;
-  document.getElementById('games').textContent = t.games.toLocaleString();
-  document.getElementById('training-line').textContent =
-    `A small neural network trained on a ${t.adapter} GPU for ${t.epochs} epochs on ${t.training_options.toLocaleString()} option examples. It was validated on ${t.validation_options.toLocaleString()} held-out examples, with a validation MSE of ${t.validation_mse.toFixed(4)}.`;
-}).catch(() => { document.getElementById('setting').textContent = 'Results could not be loaded.'; });
-
-const names = {8: 'Add a resource to the front-line unit', 9: 'Upgrade a unit', 12: 'Swap the front-line unit', 13: 'Attack', 14: 'End the turn'};
-const menu = document.getElementById('scenario'), out = document.getElementById('output'), run = document.getElementById('run');
-let data = [];
-function draw(reveal) {
-  const s = data[Number(menu.value)]; out.replaceChildren();
-  s.options.forEach((o, i) => {
-    const chosen = reveal && s.selected.includes(i);
-    const row = document.createElement('div'); row.className = 'option' + (chosen ? ' chosen' : '');
-    const label = document.createElement('div');
-    label.textContent = names[o.type] + (reveal ? ` · score ${s.scores[i]}` + (chosen ? ' · chosen' : '') : '');
-    row.append(label);
-    if (reveal) row.append(bar((s.scores[i] + 10) / 17));
-    out.append(row);
-  });
-}
-fetch('demo.json').then(r => { if (!r.ok) throw Error(); return r.json(); }).then(d => {
-  data = d; menu.replaceChildren();
-  d.forEach((s, i) => { const o = document.createElement('option'); o.value = i; o.textContent = s.title; menu.append(o); });
-  menu.disabled = false; run.disabled = false; draw(false);
-}).catch(() => { out.textContent = 'Example menus could not be loaded.'; });
-menu.addEventListener('change', () => draw(false));
-run.addEventListener('click', () => draw(true));
-</script>
+<script type="module" src="js/ui.js"></script>
 </body>
 </html>
