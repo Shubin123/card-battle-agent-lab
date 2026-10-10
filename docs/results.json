@@ -1,4 +1,95 @@
 {
-  "status": "not_trained",
-  "note": "No official-engine training or evaluation has completed. No match performance is available."
+  "status": "evaluated",
+  "updated": "2026-10-10",
+  "setting": "Local single games on the competition simulator, held-out deck variant, seats alternated. The leaderboard plays best-of-three episodes against other entrants, so these numbers are not a rating.",
+  "agents": [
+    {
+      "name": "Lookahead search",
+      "description": "Simulates each legal choice through the rest of its own turn with the simulator's search API, guessing hidden cards from visible ones only, and scores the resulting board.",
+      "by_opponent": {
+        "Random legal moves": {
+          "matches": 100,
+          "wins": 95,
+          "draws": 0,
+          "losses": 5,
+          "win_rate": 0.95,
+          "win_rate_wilson_95": [
+            0.8882480347279118,
+            0.9784566385436864
+          ]
+        },
+        "Tactical heuristic": {
+          "matches": 100,
+          "wins": 78,
+          "draws": 0,
+          "losses": 22,
+          "win_rate": 0.78,
+          "win_rate_wilson_95": [
+            0.6892946528499969,
+            0.849988254963442
+          ]
+        },
+        "GPU-trained network": {
+          "matches": 100,
+          "wins": 80,
+          "draws": 0,
+          "losses": 20,
+          "win_rate": 0.8,
+          "win_rate_wilson_95": [
+            0.7111690380734977,
+            0.8666340774409013
+          ]
+        }
+      },
+      "decision_ms_p95": 57.64410016126931
+    },
+    {
+      "name": "GPU-trained network",
+      "description": "Small neural scorer blended 50/50 with the tactical heuristic.",
+      "by_opponent": {
+        "Random legal moves": {
+          "matches": 200,
+          "wins": 170,
+          "draws": 0,
+          "losses": 30,
+          "win_rate": 0.85,
+          "win_rate_wilson_95": [
+            0.7939430617334484,
+            0.892864734123727
+          ]
+        },
+        "Linear baseline": {
+          "matches": 200,
+          "wins": 101,
+          "draws": 0,
+          "losses": 99,
+          "win_rate": 0.505,
+          "win_rate_wilson_95": [
+            0.4362687594824017,
+            0.5735427804584151
+          ]
+        },
+        "Tactical heuristic": {
+          "matches": 200,
+          "wins": 115,
+          "draws": 0,
+          "losses": 85,
+          "win_rate": 0.575,
+          "win_rate_wilson_95": [
+            0.5057080512046821,
+            0.6414650479075696
+          ]
+        }
+      },
+      "decision_ms_p95": 1.72149995341897
+    }
+  ],
+  "training": {
+    "adapter": "Radeon RX 580 Series",
+    "epochs": 20,
+    "training_options": 266794,
+    "validation_options": 32096,
+    "validation_mse": 0.013441209681332111,
+    "games": 1200
+  }
 }
